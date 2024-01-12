@@ -1,27 +1,35 @@
-import random
 import time
+import sqlite3
+import random
 
 def sweep():
     try:
-        # Simulating a sweep operation with a random chance of failure
         print("Performing sweep operation...")
-        time.sleep(2)  # Simulating a delay for the sweep operation
+        time.sleep(2)  # Simulate a time delay
 
-        if random.random() < 0.1:  # 10% chance to simulate an error
-            raise Exception("Signal Hound device not responding")
+        # Generate mock sweep data for frequencies 1-100 and amplitudes 0-100
+        data = [random.randint(0, 100) for _ in range(100)]
+        
+        # Get current date and time as Unix Time (integer)
+        current_unix_time = int(time.time())
 
-        # Simulate successful sweep data
-        sweep_data = [random.uniform(-100, 0) for _ in range(10)]  # Example sweep data
-        print("Sweep successful:", sweep_data)
-        return "Success", None
+        # Connect to the SQLite database
+        with sqlite3.connect('signal_hound_data.db') as conn:
+            cursor = conn.cursor()
+
+            # Insert each frequency's data into the database
+            for freq_idx, amp_mW in enumerate(data, start=1):
+                frequency_MHz = freq_idx  # Example frequency value
+                cursor.execute('''
+                    INSERT INTO sweep_data (unix_time, frequency_MHz, amp_mW)
+                    VALUES (?, ?, ?)
+                ''', (current_unix_time, frequency_MHz, amp_mW))
+
+        print("Sweep completed successfully.")
+
     except Exception as e:
-        # Return the error message if an exception occurs
-        return "Error", str(e)
+        print(f"Error during sweep: {e}")
+        raise e
 
 if __name__ == "__main__":
-    # For testing the sweep function directly
-    status, error = sweep()
-    if status == "Error":
-        print(f"Error occurred during sweep: {error}")
-    else:
-        print("Sweep operation completed successfully")
+    sweep()
